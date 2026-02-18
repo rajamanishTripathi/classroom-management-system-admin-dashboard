@@ -1,17 +1,23 @@
 import express from "express";
+import { cars } from "./schema.js";
+import { db } from "./db.js";
 
 const app = express();
 const PORT = 3000;
 
-const router = express.Router();
-
+//for Express to parsing JSON
 app.use(express.json());
 
-let cars = [
-  { id: 1, make: "Toyota", model: "Camry", year: 2022, price: 28000 },
-  { id: 2, make: "Tesla", model: "Model S", year: 2023, price: 25000 },
-  { id: 3, make: "Ford", model: "F-150", year: 2021, price: 35000 },
-];
+const router = express.Router();
+app.use("/api/v1", router);
+// If app.use(express.json()) is after routes → req.body will be undefined.
+
+
+// let cars = [
+//   { id: 1, make: "Toyota", model: "Camry", year: 2022, price: 28000 },
+//   { id: 2, make: "Tesla", model: "Model S", year: 2023, price: 25000 },
+//   { id: 3, make: "Ford", model: "F-150", year: 2021, price: 35000 },
+// ];
 
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
@@ -27,7 +33,7 @@ router.get("/cars", (req, res) => {
   res.json(cars);
 });
 
-router.post("/cars", (req, res) => {
+router.post("/cars", async (req, res) => {
   const { make, model, year, price } = req.body;
 
   if (!make || !model || !year || !price) {
@@ -36,17 +42,8 @@ router.post("/cars", (req, res) => {
     });
   }
 
-  const nextId = cars.length + 1;
-
-  const newCar = {
-    id: nextId,
-    make,
-    model,
-    year: parseInt(year),
-    price: parseFloat(price),
-  };
-
-  cars.push(newCar);
+  const [newCar] = await db.insert(cars).values({make, model, year, price }).returning();
+  // returning ->to pass data to frontend that was just inserted
 
   res.status(201).json(newCar);
 });
@@ -96,7 +93,7 @@ router.get("/cars/:id", (req, res) => {
   res.json(car);
 });
 
-app.use("/api/v1", router);
+
 
 app.use((err, req, res, next) => {
   console.error("Error:", err.message);
