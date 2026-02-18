@@ -29,8 +29,9 @@ app.get("/", (req, res) => {
   res.send("Hello from Car API!");
 });
 
-router.get("/cars", (req, res) => {
-  res.json(cars);
+router.get("/cars", async (req, res) => {
+  const allCars = await db.select().from(cars);
+  res.json(allCars);
 });
 
 router.post("/cars", async (req, res) => {
